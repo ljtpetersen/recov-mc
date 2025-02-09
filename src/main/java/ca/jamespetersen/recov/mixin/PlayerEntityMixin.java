@@ -20,6 +20,6 @@ public abstract class PlayerEntityMixin {
     @Inject(at = @At("HEAD"), method = "dropInventory")
     protected void dropInventory(CallbackInfo ci) {
         StoredInventory storedInventory = new StoredInventory(getInventory());
-        RecovInventory.globalRecovInventory.insertInventory(getGameProfile().getId(), storedInventory);
+        RecovInventory.globalRecovInventory.insertInventory((PlayerEntity)(Object)this, storedInventory);
     }
 }

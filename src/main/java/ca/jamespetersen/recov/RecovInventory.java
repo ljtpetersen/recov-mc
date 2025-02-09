@@ -1,6 +1,8 @@
 package ca.jamespetersen.recov;
 
 import com.mojang.authlib.GameProfile;
+import me.lucko.fabric.api.permissions.v0.Permissions;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -19,6 +21,7 @@ public class RecovInventory extends PersistentState {
     private int ticksUntilExpired = 48000;
     private int tickUpdatePeriod = 8000;
     private int maxInventoriesPerPlayer = 10;
+    private boolean requirePermissionToCache = false;
     public static RecovInventory globalRecovInventory;
 
     public RecovInventory() {}
@@ -27,6 +30,7 @@ public class RecovInventory extends PersistentState {
         ticksUntilExpired = nbt.getInt("ticksUntilExpired");
         tickUpdatePeriod = nbt.getInt("tickUpdatePeriod");
         maxInventoriesPerPlayer = nbt.getInt("maxInventoriesPerPlayer");
+        requirePermissionToCache = nbt.getBoolean("requirePermissionToCache");
         NbtList playerInventories = nbt.getList("storedPlayerInventories", NbtElement.COMPOUND_TYPE);
         for (int i = 0; i < playerInventories.size(); ++i) {
             NbtCompound playerInventory = playerInventories.getCompound(i);
@@ -77,8 +81,12 @@ public class RecovInventory extends PersistentState {
         }
     }
 
-    public void insertInventory(UUID playerId, StoredInventory inventory) {
+    public void insertInventory(PlayerEntity playerEntity, StoredInventory inventory) {
+        if (requirePermissionToCache && !Permissions.check(playerEntity, "recov.cacheinventory")) {
+            return;
+        }
         markDirty();
+        UUID playerId = playerEntity.getGameProfile().getId();
         ArrayDeque<StoredInventory> queue = inventories.computeIfAbsent(playerId, k -> {
             cacheIdWithTime(k, inventory.timeCreated);
             return new ArrayDeque<>();
@@ -98,6 +106,13 @@ public class RecovInventory extends PersistentState {
         if (ticksUntilExpired != this.ticksUntilExpired) {
             markDirty();
             this.ticksUntilExpired = ticksUntilExpired;
+        }
+    }
+
+    public void setRequirePermissionToCache(boolean requirePermissionToCache) {
+        if (requirePermissionToCache != this.requirePermissionToCache) {
+            markDirty();
+            this.requirePermissionToCache = requirePermissionToCache;
         }
     }
 
@@ -175,6 +190,7 @@ public class RecovInventory extends PersistentState {
         nbt.putInt("ticksUntilExpired", ticksUntilExpired);
         nbt.putInt("tickUpdatePeriod", tickUpdatePeriod);
         nbt.putInt("maxInventoriesPerPlayer", maxInventoriesPerPlayer);
+        nbt.putBoolean("requirePermissionToCache", requirePermissionToCache);
         return nbt;
     }
 
