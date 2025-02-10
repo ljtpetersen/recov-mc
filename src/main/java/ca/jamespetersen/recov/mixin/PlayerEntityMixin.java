@@ -2,7 +2,6 @@ package ca.jamespetersen.recov.mixin;
 
 import ca.jamespetersen.recov.RecovInventory;
 import ca.jamespetersen.recov.StoredInventory;
-import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import org.spongepowered.asm.mixin.Mixin;
