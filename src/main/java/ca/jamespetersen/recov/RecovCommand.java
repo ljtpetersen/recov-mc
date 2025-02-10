@@ -17,11 +17,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import net.minecraft.util.Pair;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import static net.minecraft.server.command.CommandManager.*;
 
@@ -36,10 +38,13 @@ public class RecovCommand {
 
     public void register(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(literal("recov")
-                .requires(Permissions.require("recov.command.recov", 3))
                 .then(literal("list")
                         .requires(Permissions.require("recov.command.recov.list", 3))
                         .executes(context -> executeList(context.getSource()))
+                        .then(argument("onlyOnlinePlayers", BoolArgumentType.bool())
+                                .executes(context -> executeList(context.getSource(), BoolArgumentType.getBool(context, "onlyOnlinePlayers")))
+                                .then(argument("filter", StringArgumentType.word())
+                                        .executes(context -> executeList(context.getSource(), BoolArgumentType.getBool(context, "onlyOnlinePlayers"), StringArgumentType.getString(context, "filter")))))
                         .then(argument("player", StringArgumentType.word())
                                 .suggests((context, builder) -> CommandSource.suggestMatching(recovInventory.getAvailableUsernames(context.getSource()), builder))
                                 .executes(context -> executeList(context.getSource(), stringArgumentToGameProfile(context)))))
@@ -59,7 +64,6 @@ public class RecovCommand {
                                                 EntityArgumentType.getPlayer(context,"player"),
                                                 IntegerArgumentType.getInteger(context, "deathNumber")))
                                         .then(argument("sourcePlayer", StringArgumentType.word())
-                                                .requires(Permissions.require("recov.command.recov.restore.separateSource", 3))
                                                 .suggests((context, builder) -> CommandSource.suggestMatching(recovInventory.getAvailableUsernames(context.getSource()), builder))
                                                 .executes(context -> executeRestore(
                                                         context.getSource(),
@@ -130,9 +134,28 @@ public class RecovCommand {
     }
 
     public int executeList(ServerCommandSource source) {
-        recovInventory.getPlayersAndAmounts(source).forEach(pair ->
-                source.sendFeedback(() -> Text.translatable("commands.recov.list.player", Text.literal(pair.getLeft()), pair.getRight()), false));
+        listFromStream(source, recovInventory.getPlayersAndAmounts(source));
         return 1;
+    }
+
+    public int executeList(ServerCommandSource source, boolean onlyOnlinePlayers) {
+        listFromStream(source, recovInventory.getPlayersAndAmounts(source, onlyOnlinePlayers));
+        return 1;
+    }
+
+    public int executeList(ServerCommandSource source, boolean onlyOnlinePlayers, String filter) {
+        listFromStream(source, recovInventory.getPlayersAndAmounts(source, onlyOnlinePlayers, filter));
+        return 1;
+    }
+
+    public void listFromStream(ServerCommandSource source, Stream<Pair<String, Integer>> stream) {
+        Iterator<Pair<String, Integer>> it = stream.iterator();
+        if (it.hasNext()) {
+            it.forEachRemaining(pair ->
+                    source.sendFeedback(() -> Text.translatable("commands.recov.list.player", Text.literal(pair.getLeft()), pair.getRight()), false));
+        } else {
+            source.sendFeedback(() -> Text.translatable("commands.recov.list.noplayers"), false);
+        }
     }
 
     public int executeRestore(ServerCommandSource source, ServerPlayerEntity player, int index, GameProfile sourcePlayer) throws CommandSyntaxException {

@@ -15,8 +15,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class PlayerEntityMixin {
     @Shadow public abstract PlayerInventory getInventory();
 
-    @Shadow public abstract GameProfile getGameProfile();
-
     @Inject(at = @At("HEAD"), method = "dropInventory")
     protected void dropInventory(CallbackInfo ci) {
         StoredInventory storedInventory = new StoredInventory(getInventory());

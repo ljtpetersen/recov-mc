@@ -2,6 +2,7 @@ package ca.jamespetersen.recov;
 
 import com.mojang.authlib.GameProfile;
 import me.lucko.fabric.api.permissions.v0.Permissions;
+import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
@@ -13,6 +14,7 @@ import net.minecraft.world.PersistentState;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class RecovInventory extends PersistentState {
@@ -82,7 +84,7 @@ public class RecovInventory extends PersistentState {
     }
 
     public void insertInventory(PlayerEntity playerEntity, StoredInventory inventory) {
-        if (requirePermissionToCache && !Permissions.check(playerEntity, "recov.cacheinventory")) {
+        if (requirePermissionToCache && Permissions.check(playerEntity, "recov.cacheinventory", false)) {
             return;
         }
         markDirty();
@@ -161,6 +163,25 @@ public class RecovInventory extends PersistentState {
                 .map(id -> Objects.requireNonNull(source.getServer().getUserCache()).getByUuid(id))
                 .flatMap(Optional::stream)
                 .map(GameProfile::getName);
+    }
+
+    public Stream<Pair<String, Integer>> getPlayersAndAmounts(ServerCommandSource source, boolean onlyOnlinePlayers, String filter) {
+        Pattern pat = Pattern.compile(Pattern.quote(filter), Pattern.CASE_INSENSITIVE);
+        return getPlayersAndAmounts(source, onlyOnlinePlayers)
+                .filter(pair -> pat.matcher(pair.getLeft()).find());
+    }
+
+    public Stream<Pair<String, Integer>> getPlayersAndAmounts(ServerCommandSource source, boolean onlyOnlinePlayers) {
+        if (!onlyOnlinePlayers) {
+            return getPlayersAndAmounts(source);
+        }
+        return inventories
+                .entrySet()
+                .stream()
+                .map(entry ->
+                        Optional.ofNullable(Objects.requireNonNull(source.getServer().getPlayerManager()).getPlayer(entry.getKey()))
+                                .map(playerEntity -> new Pair<>(playerEntity.getGameProfile().getName(), entry.getValue().size())))
+                .flatMap(Optional::stream);
     }
 
     public Stream<Pair<String, Integer>> getPlayersAndAmounts(ServerCommandSource source) {
