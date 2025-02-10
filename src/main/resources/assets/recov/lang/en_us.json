@@ -6,9 +6,13 @@
   "commands.recov.printDeathInventory.header": "Inventory at death contained",
   "commands.recov.printDeathInventory.empty": "Inventory at death was empty",
   "commands.recov.restore": "Restored items to %s",
+  "commands.recov.restore.source": "Restored items to %s from %s's inventory",
+  "commands.recov.list.player": "%s has %d inventories",
   "commands.recov.list.entry": "#%d on %s at %s",
   "commands.recov.list.start": "Death inventories of player %s",
   "commands.recov.list.empty": "%s has no death inventories",
+  "commands.recov.list.noplayers": "No players have death inventories",
   "commands.recov.setTickUpdatePeriod": "Set recov cleanup period to %d ticks",
-  "commands.recov.setMaxInventoriesPerPlayer": "Set recov maximum inventories per player to %d"
+  "commands.recov.setMaxInventoriesPerPlayer": "Set recov maximum inventories per player to %d",
+  "commands.recov.setRequirePermissionToCache": "Set recov require permission to cache to %s"
 }

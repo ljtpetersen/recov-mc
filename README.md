@@ -5,15 +5,20 @@ The plugin is interacted with entirely through a command API. The actions are al
 The commands are listed below.
 ```
 /recov list [<player>]
+/recov list [<onlyOnlinePlayers>] [<filter>]
 /recov clear [<player>]
 /recov restore <player> [<deathNumber>] [<sourcePlayer>]
 /recov printDeathInventory <player> [<deathNumber>]
 /recov setTicksUntilExpired <ticksUntilExpired>
 /recov setTickUpdatePeriod <tickUpdatePeriod>
 /recov setMaxInventoriesPerPlayer <maxInventoriesPerPlayer>
+/recov setRequirePermissionToCache <requirePermissionToCache>
 ```
 
 The `list` command, with no arguments passed, will list players who have stored inventories, including offline players. When passing a player's username, it will list the death inventories of that player.
+The second set of optional arguments for the `list` command will allow one to only view the inventories of online players, and specify an optional filter.
+A consequence of this is that, if one wants to list the death inventories of players whose names are either `true` or `false`, one must specify them in all uppercase. So,
+`/recov list TRUE` will list the inventories of the player whose username is `true`, which `/recov list true` will list the players who are online and who have death inventories.
 
 The `clear` command, with zero parameters,
 will clear all death inventories. When passing a player's username, it will only clear that player's death inventories.
@@ -23,7 +28,30 @@ The `restore` command will restore a player's inventory. The `deathNumber` field
 The `printDeathInventory` command will print the items in a player's inventory at the time of their death.
 
 The `setTicksUntilExpired` will set the amount of ticks the mod will wait before deleting a player death inventory entry.
+By default, this is set to `48000`.
 
 The `setTickUpdatePeriod` will set the amount of time the mod will wait before checking if there are any expired death inventories to remove.
+By default, this is set to `8000`.
 
 The `setMaxInventoriesPerPlayer` will set the maximum inventories per player. If any more deaths occur, the oldest inventories are deleted early.
+By default, this is set to `10`.
+
+The `setRequirePermissionToCache` will set whether the plugin will check if a player has the `recov.cacheinventory` permission before caching their inventory on death.
+By default, this is set to `false`.
+
+**!!! DO NOT ENABLE `setRequirePermissionToCache` IF THE SERVER DOES NOT HAVE A PERMISSIONS MOD/PLUGIN. IT WILL CRASH ON ANY PLAYER DEATH !!!**
+
+Players with permission level of at least 3 have access to all `recov` commands, but they do not have the `recov.cacheinventory` permission.
+If you are using a permissions mod, the following permissions correspond to
+each command.
+
+| Permission                                   | Description                                                                                                                                                                     |
+|----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `recov.command.recov.list`                   | Required to use the `list` subcommand.                                                                                                                                          |
+| `recov.command.recov.clear`                  | Required to use the `clear` subcommand.                                                                                                                                         |
+| `recov.command.recov.restore`                | Required to use the `restore` subcommand.                                                                                                                                       |
+| `recov.command.recov.printDeathInventory`    | Required to use the `printDeathInventory` subcommand.                                                                                                                           |
+| `recov.command.recov.configure`              | Required to use any of the configuration subcommands, which are `setTicksUntilExpired`, `setTickUpdatePeriod`, `setMaxInventoriesPerPlayer`, and `setRequirePermissionToCache`. |
+| `recov.cacheinventory`                       | Required to have inventory cached if `requirePermissionToCache` is set to `true`.                                                                                               |
+
+Removing the `recov.cacheinventory` permission from a player will not clear their currently-existing cached inventories.
